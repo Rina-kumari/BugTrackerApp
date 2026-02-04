@@ -76,19 +76,29 @@ bug-tracker/
    Create a `.env` file in the `backend` directory:
 
     PORT=5000
+
     DB_HOST=localhost
+
     DB_PORT=5432
+
     DB_NAME=your_database_name
+
     DB_USER=your_database_user
+
     DB_PASSWORD=your_database_password
+
     JWT_SECRET=your_jwt_secret_key
+
     CLIENT_URL=http://localhost:5173
 
     ARCJET_ENV=development
+
     ARCJET_KEY=your_secret_key
 
     RESEND_API_KEY=your_secret_key
+
     RESEND_DOMAIN=resend.dev
+
     APP_NAME=TaskApp
 
 
@@ -114,6 +124,3 @@ bug-tracker/
    
    Frontend will run on `http://localhost:5173`
 
-## Contact
-
-Project Link: https://github.com/Rina-kumari/BugTrackerApp
