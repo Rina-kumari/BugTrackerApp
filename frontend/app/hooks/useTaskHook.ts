@@ -87,7 +87,7 @@ export const useUpdateTaskDescriptionMutation = () => {
         description: data.description,
       }),
     onSuccess: (data: any, variables) => {
-      console.log('Description updated, invalidating for taskId:', variables.taskId);
+
       queryClient.invalidateQueries({
         queryKey: ["task", variables.taskId],
       });
@@ -102,21 +102,40 @@ export const useUpdateTaskAssigneesMutation = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: { taskId: string; assignees: string[] }) =>
+    mutationFn: (data: {
+      taskId: string;
+      assignees: string[];
+      projectId?: string;
+    }) =>
       updateData(`/tasks/${data.taskId}/assignees`, {
         assignees: data.assignees,
       }),
     onSuccess: (data: any, variables) => {
+  
       queryClient.invalidateQueries({
         queryKey: ["task", variables.taskId],
       });
+
       queryClient.invalidateQueries({
         queryKey: ["task-activity", variables.taskId],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ["tasks"],
+      });
+
+      if (variables.projectId) {
+        queryClient.invalidateQueries({
+          queryKey: ["project", variables.projectId],
+        });
+      }
+    
+      queryClient.refetchQueries({
+        queryKey: ["task", variables.taskId],
       });
     },
   });
 };
-
 export const useUpdateTaskPriorityMutation = () => {
   const queryClient = useQueryClient();
 

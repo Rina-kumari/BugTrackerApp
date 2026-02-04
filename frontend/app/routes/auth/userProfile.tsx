@@ -46,9 +46,7 @@ export const ProfilePage = () => {
   
           updateUser(updatedUser);
           
-          toast.success("Profile updated successfully", {
-            description: "Your profile information has been saved.",
-          });
+          toast.success("Profile updated successfully");
           
           setHasProfileChanges(false);
         },
@@ -99,9 +97,7 @@ export const ProfilePage = () => {
             setNewPassword("");
             setConfirmPassword("");
 
-            toast.success("Password updated successfully", {
-              description: "Your password has been changed.",
-            });
+            toast.success("Password updated successfully");
           },
           onError: (error: any) => {
             throw error;

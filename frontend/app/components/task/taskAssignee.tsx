@@ -13,9 +13,8 @@ export const TaskAssigneesSelector = ({
   assignees: User[];
   projectMembers: any[];
 }) => {
+  const members = projectMembers.map((m) => m.user || m);
 
-  const members = projectMembers.map(m => m.user || m);
-  
   const [selectedIds, setSelectedIds] = useState<string[]>(
     assignees.map((assignee) => assignee?.id?.toString() || "").filter(Boolean)
   );
@@ -35,8 +34,9 @@ export const TaskAssigneesSelector = ({
 
     mutate(
       {
-        taskId: task.id,
+        taskId: task.id.toString(),
         assignees: newSelected,
+        projectId: task.project_id?.toString(), 
       },
       {
         onSuccess: () => {
@@ -64,13 +64,15 @@ export const TaskAssigneesSelector = ({
           <span className="text-xs text-muted-foreground">Unassigned</span>
         ) : (
           members
-            .filter((member) => member?.id && selectedIds.includes(member.id.toString()))
+            .filter(
+              (member) =>
+                member?.id && selectedIds.includes(member.id.toString())
+            )
             .map((member) => (
               <div
                 key={member.id}
                 className="flex items-center bg-gray-100 rounded px-2 py-1"
               >
-               
                 <span className="text-xs text-muted-foreground">
                   {member.name}
                 </span>
@@ -78,10 +80,12 @@ export const TaskAssigneesSelector = ({
             ))
         )}
       </div>
+
       <div className="relative">
         <button
           className="text-sm text-muted-foreground w-full border rounded px-3 py-2 text-left bg-white"
           onClick={() => setDropDownOpen(!dropDownOpen)}
+          disabled={isPending}
         >
           {selectedIds.length === 0
             ? "Select assignees"
@@ -90,33 +94,43 @@ export const TaskAssigneesSelector = ({
 
         {dropDownOpen && (
           <div className="absolute z-10 mt-1 w-full bg-white border rounded shadow-lg max-h-60 overflow-y-auto">
-          
+            {members.filter((m) => m?.id).length === 0 ? (
+              <div className="px-3 py-2 text-sm text-muted-foreground">
+                No members available
+              </div>
+            ) : (
+              members
+                .filter((m) => m?.id)
+                .map((member) => (
+                  <label
+                    className="flex items-start px-3 py-2 cursor-pointer hover:bg-gray-50"
+                    key={member.id}
+                  >
+                    <Checkbox
+                      checked={selectedIds.includes(member.id.toString())}
+                      onCheckedChange={() =>
+                        handleSelect(member.id.toString())
+                      }
+                      className="mr-2 mt-1"
+                      disabled={isPending}
+                    />
 
-            {members.filter(m => m?.id).map((member) => (
-              <label
-                className="flex items-start px-3 py-2 cursor-pointer hover:bg-gray-50"
-                key={member.id}
-              >
-                <Checkbox
-                  checked={selectedIds.includes(member.id.toString())}
-                  onCheckedChange={() => handleSelect(member.id.toString())}
-                  className="mr-2 mt-1"
-                  disabled={isPending}
-                />
-
-               
-                <div className="flex flex-col flex-1">
-                  <span className="text-sm font-medium">{member.name}</span>
-                  <span className="text-xs text-muted-foreground">{member.email}</span>
-                  {member.role && (
-                    <span className="text-xs text-muted-foreground capitalize">
-                      {member.role}
-                    </span>
-                  )}
-                </div>
-              </label>
-            ))}
-
+                    <div className="flex flex-col flex-1">
+                      <span className="text-sm font-medium">
+                        {member.name}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {member.email}
+                      </span>
+                      {member.role && (
+                        <span className="text-xs text-muted-foreground capitalize">
+                          {member.role}
+                        </span>
+                      )}
+                    </div>
+                  </label>
+                ))
+            )}
           </div>
         )}
       </div>

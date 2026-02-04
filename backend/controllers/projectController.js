@@ -88,7 +88,7 @@ const getProjects = async (req, res) => {
     
     const creatorIds = [...new Set(projects.map(p => p.created_by))];
     const creatorsResult = await pool.query(
-      `SELECT id, name, email
+      `SELECT id, name, email, role  -- ✅ Add role here
        FROM users
        WHERE id = ANY($1)`,
       [creatorIds]
@@ -271,7 +271,7 @@ const updateProject = async (req, res) => {
     const project = updateResult.rows[0];
     
     if (members && members.length > 0) {
-  
+    
       await client.query(
         `DELETE FROM project_members 
          WHERE project_id = $1 AND user_id != $2`,
@@ -279,18 +279,23 @@ const updateProject = async (req, res) => {
       );
       
       for (const member of members) {
-        
-        if (member.userId !== creatorId) {
-          await client.query(
-            `INSERT INTO project_members (project_id, user_id, role, joined_at) 
-             VALUES ($1, $2, $3, NOW())
-             ON CONFLICT (project_id, user_id) 
-             DO UPDATE SET role = EXCLUDED.role`,
-            [id, member.userId, member.role]
-          );
-        }
+        await client.query(
+          `INSERT INTO project_members (project_id, user_id, role, joined_at) 
+           VALUES ($1, $2, $3, NOW())
+           ON CONFLICT (project_id, user_id) 
+           DO UPDATE SET role = EXCLUDED.role`,
+          [id, member.userId, member.role]
+        );
       }
     }
+    
+    await client.query(
+      `INSERT INTO project_members (project_id, user_id, role, joined_at) 
+       VALUES ($1, $2, 'admin', NOW())
+       ON CONFLICT (project_id, user_id) 
+       DO UPDATE SET role = 'admin'`,
+      [id, creatorId]
+    );
     
     await client.query('COMMIT');
     

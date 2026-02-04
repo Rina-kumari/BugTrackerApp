@@ -233,7 +233,7 @@ const ProjectDetails = () => {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => navigate(-1)}
+          onClick={() => navigate(`/projects`)}
           className="gap-2"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -397,7 +397,7 @@ const ProjectDetails = () => {
               <SelectItem value="All">All Status</SelectItem>
               <SelectItem value="To Do">To Do</SelectItem>
               <SelectItem value="In Progress">In Progress</SelectItem>
-              <SelectItem value="In Testing">Testing</SelectItem>
+              <SelectItem value="Testing">Testing</SelectItem>
               <SelectItem value="Done">Done</SelectItem>
             </SelectContent>
           </Select>

@@ -25,8 +25,8 @@ export interface Project {
   id: number;
   title: string;
   description?: string;
-  created_by: number; // User ID who created the project
-  created_by_user?: {  // Creator information
+  created_by: number; 
+  created_by_user?: {  
     id: number;
     name: string;
     email: string;
@@ -79,23 +79,8 @@ export interface Task {
     role?: string;
   };
   assignees?: User[];
-  attachments?: Attachment[];
 }
 
-export interface Attachment {
-  id: number;
-  task_id: number;
-  file_name: string;
-  file_url: string;
-  file_type: string;
-  file_size: number;
-  uploaded_by: number;
-  uploaded_at: string;
-}
-
-// types/indexTypes.ts
-
-// Update ActionType to match what backend sends
 export type ActionType = 
   | "created_task"
   | "updated_task"
@@ -105,14 +90,14 @@ export type ActionType =
   | "deleted_subtask"
   | "assigned_task"
   | "unassigned_task"
-  | string; // Allow any string for flexibility
+  | string;
 
 export type ResourceType = "Task" | "Project" | "Subtask" | string;
 
 export interface ActivityLog {
   id: number;
   user_id: number;
-  action: ActionType; // Now this matches
+  action: ActionType; 
   entity_type: ResourceType;
   entity_id: number;
   description: string;

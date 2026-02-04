@@ -91,6 +91,14 @@ export const CreateProject = ({
             role: m.role,
           })) || [];
 
+        const creatorInMembers = mappedMembers.find(m => m.userId === editingProject.created_by);
+        if (!creatorInMembers && editingProject.created_by) {
+          mappedMembers.unshift({
+            userId: editingProject.created_by,
+            role: "admin" as ProjectRole,
+          });
+        }
+
         form.reset({
           title: editingProject.title,
           description: editingProject.description || "",
@@ -121,6 +129,16 @@ export const CreateProject = ({
   };
 
   const onSubmit = (data: ProjectForm) => {
+    if (isEditMode && editingProject) {
+      const creatorInMembers = data.members?.find(m => m.userId === editingProject.created_by);
+      if (!creatorInMembers && editingProject.created_by) {
+        data.members = [
+          { userId: editingProject.created_by, role: "admin" as ProjectRole },
+          ...(data.members || []),
+        ];
+      }
+    }
+
     setIsCreatingProject(false);
 
     if (isEditMode && editingProject) {
@@ -250,8 +268,12 @@ export const CreateProject = ({
                                 const selectedMember = selectedMembers.find(
                                   (m) => m.userId === user.id
                                 );
-                                const isCurrentUser =
-                                  !!currentUserId && user.id === currentUserId;
+                              
+                                // Check if user is creator (in both create and edit mode)
+                                const isCreatorUser = isEditMode 
+                                  ? editingProject?.created_by === user.id 
+                                  : currentUserId === user.id;
+                                
                                 const effectiveRole = getEffectiveRole(user.id, selectedMembers);
 
                                 return (
@@ -261,7 +283,7 @@ export const CreateProject = ({
                                   >
                                     <Checkbox
                                       checked={!!selectedMember}
-                                      disabled={isCurrentUser && !isEditMode}
+                                      disabled={isCreatorUser}
                                       onCheckedChange={(checked) => {
                                         if (checked) {
                                           field.onChange([
@@ -288,8 +310,10 @@ export const CreateProject = ({
                                     <div className="flex-1 min-w-0">
                                       <p className="text-sm font-medium truncate">
                                         {user.name}
-                                        {isCurrentUser && (
-                                          <span className="ml-2 text-xs text-primary">(You)</span>
+                                        {isCreatorUser && (
+                                          <span className="ml-2 text-xs text-primary">
+                                            ({isEditMode ? "Creator" : "You"})
+                                          </span>
                                         )}
                                       </p>
                                       <p className="text-xs text-muted-foreground truncate">
@@ -299,7 +323,7 @@ export const CreateProject = ({
 
                                     <Select
                                       value={effectiveRole}
-                                      disabled={isCurrentUser && !isEditMode}
+                                      disabled={isCreatorUser}
                                       onValueChange={(newRole) => {
                                         if (selectedMember) {
                                           field.onChange(
@@ -340,14 +364,18 @@ export const CreateProject = ({
                         <div className="flex flex-wrap gap-1 mt-2">
                           {selectedMembers.map((m) => {
                             const user = allUsers.find((u) => u.id === m.userId);
-                            const isCurrentUser = !!currentUserId && m.userId === currentUserId;
+                            // Check if user is creator (in both create and edit mode)
+                            const isCreatorUser = isEditMode 
+                              ? editingProject?.created_by === m.userId 
+                              : currentUserId === m.userId;
+                            
                             return (
                               <span
                                 key={m.userId}
                                 className="inline-flex items-center gap-1 text-xs bg-muted rounded-full px-2 py-1"
                               >
                                 {user?.name} ({m.role})
-                                {!(isCurrentUser && !isEditMode) && (
+                                {!isCreatorUser && (
                                   <button
                                     type="button"
                                     className="text-muted-foreground hover:text-destructive transition-colors"

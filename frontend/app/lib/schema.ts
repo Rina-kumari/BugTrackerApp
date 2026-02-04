@@ -30,6 +30,7 @@ export const createTaskSchema = z.object({
   status: z.enum(["To Do", "In Progress", "Testing", "Done"]),
   priority: z.enum(["Low", "Medium", "High"]),
   dueDate: z.string().min(1, "Due date is required"),
+  assignees: z.array(z.number()).optional(),
 });
 
 export const forgotPasswordSchema = z.object({

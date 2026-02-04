@@ -2,33 +2,38 @@ import pool from '../config/db.js';
 import {recordActivity} from "../libs/activityLogger.js"
 
 const createTask = async (req, res) => {
+  const client = await pool.connect();
   try {
     const { projectId } = req.params;
     const { title, description, status, priority, dueDate, assignees } = req.body;
 
-    const projectResult = await pool.query(
+    await client.query('BEGIN');
+
+    const projectResult = await client.query(
       'SELECT * FROM projects WHERE id = $1',
       [projectId]
     );
 
     if (projectResult.rows.length === 0) {
+      await client.query('ROLLBACK');
       return res.status(404).json({
         message: "Project not found",
       });
     }
 
-    const memberResult = await pool.query(
+    const memberResult = await client.query(
       'SELECT * FROM project_members WHERE project_id = $1 AND user_id = $2',
       [projectId, req.user.id]
     );
 
     if (memberResult.rows.length === 0) {
+      await client.query('ROLLBACK');
       return res.status(403).json({
         message: "You are not a member of this project",
       });
     }
 
-    const taskResult = await pool.query(
+    const taskResult = await client.query(
       `INSERT INTO tasks (title, description, status, priority, due_date, project_id, created_by, created_at, updated_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
        RETURNING *`,
@@ -42,18 +47,50 @@ const createTask = async (req, res) => {
         `($1, $${index + 2})`
       ).join(', ');
       
-      await pool.query(
+      await client.query(
         `INSERT INTO task_assignees (task_id, user_id) VALUES ${assigneeValues}`,
         [newTask.id, ...assignees]
       );
     }
 
-    res.status(201).json(newTask);
+    await client.query('COMMIT');
+
+    const completeTaskResult = await pool.query(
+      `SELECT t.*,
+              json_build_object(
+                'id', creator.id,
+                'name', creator.name,
+                'email', creator.email,
+                'role', creator.role
+              ) as created_by_user,
+              COALESCE(
+                json_agg(
+                  json_build_object(
+                    'id', u.id,
+                    'name', u.name,
+                    'email', u.email
+                  )
+                ) FILTER (WHERE ta.user_id IS NOT NULL),
+                '[]'
+              ) as assignees
+       FROM tasks t
+       LEFT JOIN users creator ON t.created_by = creator.id
+       LEFT JOIN task_assignees ta ON t.id = ta.task_id
+       LEFT JOIN users u ON ta.user_id = u.id
+       WHERE t.id = $1
+       GROUP BY t.id, creator.id`,
+      [newTask.id]
+    );
+
+    res.status(201).json(completeTaskResult.rows[0]);
   } catch (error) {
+    await client.query('ROLLBACK');
     console.log(error);
     return res.status(500).json({
       message: "Internal server error",
     });
+  } finally {
+    client.release();
   }
 };
 
@@ -63,10 +100,12 @@ const getTaskById = async (req, res) => {
   
     const taskResult = await pool.query(
       `SELECT t.*,
-        u.id as creator_id,
-        u.name as creator_name,
-        u.email as creator_email,
-        u.role as creator_role
+        json_build_object(
+          'id', u.id,
+          'name', u.name,
+          'email', u.email,
+          'role', u.role
+        ) as created_by_user
        FROM tasks t
        LEFT JOIN users u ON t.created_by = u.id
        WHERE t.id = $1`,
@@ -120,12 +159,7 @@ const getTaskById = async (req, res) => {
       priority: taskData.priority,
       project_id: taskData.project_id,
       created_by: taskData.created_by,
-      created_by_user: {
-        id: taskData.creator_id,
-        name: taskData.creator_name,
-        email: taskData.creator_email,
-        role: taskData.creator_role,
-      },
+      created_by_user: taskData.created_by_user, 
       created_at: taskData.created_at,
       updated_at: taskData.updated_at,
       due_date: taskData.due_date,
@@ -146,7 +180,6 @@ const getTaskById = async (req, res) => {
     });
   }
 };
-
 const updateTaskTitle = async (req, res) => {
   try {
     const { taskId } = req.params;
@@ -218,6 +251,12 @@ const updateTaskDescription = async (req, res) => {
     const { taskId } = req.params;
     const { description } = req.body;
     
+    if (description === undefined || description === null) {
+      return res.status(400).json({
+        message: "Description is required",
+      });
+    }
+    
     const taskResult = await pool.query('SELECT * FROM tasks WHERE id = $1', [taskId]);
     const task = taskResult.rows[0];
     
@@ -248,11 +287,13 @@ const updateTaskDescription = async (req, res) => {
       });
     }
     
-    const oldDescription =
-      task.description.substring(0, 50) +
-      (task.description.length > 50 ? "..." : "");
-    const newDescription =
-      description.substring(0, 50) + (description.length > 50 ? "..." : "");
+    const oldDescription = task.description 
+      ? task.description.substring(0, 50) + (task.description.length > 50 ? "..." : "")
+      : "No description";
+      
+    const newDescription = description
+      ? description.substring(0, 50) + (description.length > 50 ? "..." : "")
+      : "No description";
     
     const updatedTaskResult = await pool.query(
       'UPDATE tasks SET description = $1, updated_at = NOW() WHERE id = $2 RETURNING *',
@@ -261,7 +302,7 @@ const updateTaskDescription = async (req, res) => {
     const updatedTask = updatedTaskResult.rows[0];
     
     await recordActivity(req.user.id, "updated_task", "Task", taskId, {
-      description: `updated task description from ${oldDescription} to ${newDescription}`,
+      description: `updated task description from "${oldDescription}" to "${newDescription}"`,
     });
     
     res.status(200).json(updatedTask);
@@ -269,6 +310,7 @@ const updateTaskDescription = async (req, res) => {
     console.log(error);
     return res.status(500).json({
       message: "Internal server error",
+      error: error.message,
     });
   }
 };
