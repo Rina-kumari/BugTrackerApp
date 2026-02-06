@@ -65,7 +65,7 @@ const loginUser = async (req, res) => {
     const token = jwt.sign(
       { userId: user.id, purpose: "login" },
       process.env.JWT_SECRET,
-      { expiresIn: "1d" }
+      { expiresIn: "30d" }
     );
 
     const updatedUser = await User.updateLastLogin(user.id);
