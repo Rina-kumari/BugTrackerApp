@@ -42,7 +42,7 @@ export const SidebarComponent = () => {
               </span>
             </div>
           )}
-          {isCollapsed && <Wrench className="size-6 text-blue-600" />}
+          {isCollapsed && <Bug className="size-6 text-blue-600" />}
         </Link>
 
         <Button
