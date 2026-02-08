@@ -2,15 +2,6 @@
 
 A comprehensive bug tracking and project management application that helps teams organize, track, and manage software bugs and tasks efficiently.
 
-## Screenshots
-
-![Dashboard](screenshots/dashboard.png)
-![Projects List](screenshots/projects.png)
-![Task Details](screenshots/task-details.png)
-![Login Page](screenshots/login.png)
-![Register Page](screenshots/register.png)
-
-
 ## Tech Stack
 
 **Frontend:**
