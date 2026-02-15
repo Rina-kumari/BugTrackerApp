@@ -1,4 +1,4 @@
-import { Bug, ChevronsLeft, ChevronsRight, LayoutDashboard, ListCheck, LogOut, Users, Wrench } from "lucide-react";
+import { Bug, ChevronsLeft, ChevronsRight, LayoutDashboard, LogOut, Users } from "lucide-react";
 import { useAuth } from "../../provider/authContext";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
