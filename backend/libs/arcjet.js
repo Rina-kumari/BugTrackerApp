@@ -11,6 +11,7 @@ const aj = arcjet({
       mode: "LIVE", 
       allow: [
         "CATEGORY:SEARCH_ENGINE", 
+        "POSTMAN",
       ],
     }),
     validateEmail({
