@@ -1,117 +1,88 @@
-# Bug Tracker App
+Below are the Postman Apis for register, login and CRUD operations
 
-A comprehensive bug tracking and project management application that helps teams organize, track, and manage software bugs and tasks efficiently.
-
-## Tech Stack
-
-**Frontend:**
-- [Frontend- React]
-- [Styling - Tailwind CSS]
-
-**Backend:**
-- [Backend - Node.js/Express]
-- [Database - PostgreSQL]
-- [Authentication - JWT]
-
-**Email Service:**
-- [Email Provider - Resend]
-
-## Project Structure
-
-```
-bug-tracker/
-
-├── backend/           
-│   ├── all files from github
-│   └── package.json
-├── frontend/        
-│   ├── all files from github
-│   └── package.json
-├── screenshots/       
-└── README.md
-```
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js (v14 or higher)
-- npm or yarn
-- [pgAdmin] installed and running
-- Email service account (for password reset)
-
-### Installation
-
-1. **Clone the repository**
-   bash
-   git clone https://github.com/Rina-kumari/BugTrackerApp
-   cd bug-tracker
-   
-
-2. **Backend Setup**
-   bash
-   cd backend
-   npm install
-   
-
-3. **Frontend Setup**
-   bash
-   cd frontend
-   npm install
-   
-
-### Configuration
-
-1. **Backend Environment Variables**
-   
-   Create a `.env` file in the `backend` directory:
-
-    PORT=5000
-
-    DB_HOST=localhost
-
-    DB_PORT=5432
-
-    DB_NAME=your_database_name
-
-    DB_USER=your_database_user
-
-    DB_PASSWORD=your_database_password
-
-    JWT_SECRET=your_jwt_secret_key
-
-    CLIENT_URL=http://localhost:5173
-
-    ARCJET_ENV=development
-
-    ARCJET_KEY=your_secret_key
-
-    RESEND_API_KEY=your_secret_key
-
-    RESEND_DOMAIN=resend.dev
-
-    APP_NAME=TaskApp
+1)	Register user - POST - http://localhost:5000/api-v1/auth/register
+ Click on the "Headers" tab 
+ Add: Content-Type: application/json
+{
+	  "name": "Test",
+    "email": "test1@gmail.com",
+    "role": "admin",
+    "password": "1234567890"
+}
+2)	Login user – POST - http://localhost:5000/api-v1/auth/login
+{
+    	   "email": "test1@gmail.com",
+    	   "password": "1234567890"
+}
+3)	Create project - POST - http://localhost:5000/api-v1/projects/
+Need to pass Bearer token – token from login api
+{
+		“title”: “test project”,
+		“description”: “test description”
+}
+4)	Get all projects – GET - http://localhost:5000/api-v1/projects/
+Need to pass Bearer token – token from login api
+5)	Get projectByID – GET - http://localhost:5000/api-v1/projects/:id
+Need to pass Bearer token – token from login api
+6)	Update project – PUT - http://localhost:5000/api-v1/projects/:id
+Need to pass Bearer token – token from login api
+{
+“title”: “test project update”,
+	   “description”: “test description update”
+}
+7)	Delete project – DELETE - http://localhost:5000/api-v1/projects/:id
+Need to pass Bearer token – token from login api
 
 
-2. **Frontend Environment Variables**
-   
-   Create a `.env` file in the `frontend` directory:
-   
-   VITE_API_URL = http://localhost:5000/api-v1
-   
+Database is Postgresql and pgAdmin
 
-### Running the Application
+1)	User table – 
+ CREATE TABLE public.users (
+ id SERIAL PRIMARY KEY,
+ email VARCHAR(255) NOT NULL UNIQUE,
+ password VARCHAR(255) NOT NULL,
+ name VARCHAR(255) NOT NULL,
+ last_login TIMESTAMP,
+ created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+ updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+ role VARCHAR(50) DEFAULT 'user'
+ );
 
-1. **Start Backend Server**
-   cd backend
-   npm run dev
-   
-   Backend will run on `http://localhost:5000`
+2)	Project table – 
+CREATE TABLE public.projects (
+ id SERIAL PRIMARY KEY,
+ title VARCHAR(255) NOT NULL,
+ description TEXT,
+ created_by INTEGER NOT NULL,
+ created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+ updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+ CONSTRAINT fk_projects_created_by
+    FOREIGN KEY (created_by)
+REFERENCES public.users(id)
+ON DELETE CASCADE 
+);
 
-2. **Start Frontend Development Server**
+3)	Project_member table – 
+CREATE TABLE public.project_members (
+ id SERIAL PRIMARY KEY,
+ project_id INTEGER NOT NULL,
+ user_id INTEGER NOT NULL,
+ role VARCHAR(50) DEFAULT 'member',
+ joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+ CONSTRAINT fk_project_members_project
+ 		FOREIGN KEY (project_id)
+ 		REFERENCES public.projects(id)
+ 		ON DELETE CASCADE, 
+CONSTRAINT fk_project_members_user
+ 	FOREIGN KEY (user_id)
+REFERENCES public.users(id)
+ON DELETE CASCADE,
+   CONSTRAINT unique_project_user
+ 	UNIQUE (project_id, user_id)
+ );
 
-   cd frontend
-   npm run dev
-   
-   Frontend will run on `http://localhost:5173`
+
+
+
+
 
